@@ -1,0 +1,41 @@
+title: "Edit tree lemmatizer"
+
+vars:
+  lang: "tr"
+  config: "config"
+  treebank: "Atis"
+  train_name: "tr_atis-ud-train"
+  dev_name: "tr_atis-ud-dev"
+  test_name: "tr_atis-ud-test"
+  gpu: -1
+
+# These are the directories that the project needs. The project CLI will make
+# sure that they always exist.
+directories: ["corpus", "training", "metrics"]
+
+
+
+workflows:
+  all:
+    - train
+    - evaluate
+
+commands:
+  - name: "train"
+    help: "Train the lemmatizer"
+    script:
+      - "python -m spacy train config.cfg --output training/${vars.treebank} --gpu-id ${vars.gpu} --paths.train corpus/${vars.treebank}/${vars.train_name}.spacy --paths.dev corpus/${vars.treebank}/${vars.dev_name}.spacy"
+    deps:
+      - "config.cfg"
+      - "corpus/${vars.treebank}/${vars.train_name}.spacy"
+      - "corpus/${vars.treebank}/${vars.dev_name}.spacy"
+    outputs:
+      - "training/${vars.treebank}/model-best"
+
+  - name: "evaluate"
+    help: "Evaluate the lemmatization model evaluate on the test corpus."
+    script:
+      - "python3 -m spacy evaluate training/${vars.treebank}/model-best corpus/${vars.treebank}/${vars.test_name}.spacy"
+    deps:
+      - "training/${vars.treebank}/model-best"
+
